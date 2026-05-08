@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Save, Upload, Download, RotateCcw, Plus, Minus, Heart, Zap, Droplets, Sword, Shield, Star, Backpack, Sparkles } from "lucide-react";
+import { Save, Upload, Download, RotateCcw, Plus, Minus, Heart, Zap, Droplets, Sword, Shield, Star, Sparkles, Trash2 } from "lucide-react";
+
+const emptyCard = { nome: "", descricao: "", dano: "", critico: "", custo: "", tipo: "" };
 
 const initialSheet = {
   nome: "",
@@ -18,7 +20,6 @@ const initialSheet = {
   manaMax: 10,
   staminaAtual: 10,
   staminaMax: 10,
-  pontosDisponiveis: 0,
   atributos: {
     forca: 0,
     destreza: 0,
@@ -43,9 +44,11 @@ const initialSheet = {
   },
   imagem: "",
   biografia: "",
-  habilidadesAtivas: Array(6).fill(""),
-  habilidadesPassivas: Array(7).fill(""),
-  perks: Array(10).fill(""),
+  ataques: [],
+  habilidadesAtivas: [],
+  habilidadesPassivas: [],
+  magias: [],
+  perks: [],
   equipamentos: {
     arma: "",
     subarma: "",
@@ -58,16 +61,25 @@ const initialSheet = {
     acessorio2: "",
   },
   inventarioRapido: Array(10).fill(""),
-  inventarioGeral: Array(40).fill(""),
+  inventarioGeral: [],
 };
 
 const attrInfo = [
-  ["forca", "FORÇA", "Aumenta dano físico e capacidade de carga.", "text-rose-600", Sword],
-  ["destreza", "DESTREZA", "Melhora precisão, esquiva e velocidade.", "text-cyan-600", Zap],
+  ["forca", "FORÇA", "Aumenta o dano físico e a capacidade de carga.", "text-rose-600", Sword],
+  ["destreza", "DESTREZA", "Melhor precisão, esquiva e velocidade.", "text-cyan-600", Zap],
   ["vitalidade", "VITALIDADE", "Aumenta HP máximo e resistência física.", "text-green-600", Heart],
   ["inteligencia", "INTELIGÊNCIA", "Aumenta mana e poder de habilidades.", "text-blue-600", Sparkles],
-  ["percepcao", "PERCEPÇÃO", "Melhora detecção e chance de crítico.", "text-amber-600", Star],
-  ["sorte", "SORTE", "Aumenta drops, eventos raros e críticos.", "text-violet-600", Star],
+  ["percepcao", "PERCEPÇÃO", "Melhor detecção e chance de crítico.", "text-amber-600", Star],
+  ["sorte", "SORTE", "Quedas crescentes, eventos raros e críticos.", "text-violet-600", Star],
+];
+
+const tabs = [
+  { id: "atributos", label: "ATRIBUTOS" },
+  { id: "combate", label: "COMBATE", button: "Novo Ataque", list: "ataques", search: "Filtrar ataques" },
+  { id: "habilidades", label: "HABILIDADES", button: "Nova Habilidade", list: "habilidadesAtivas", search: "Filtrar habilidades" },
+  { id: "magias", label: "MAGIAS", button: "Nova Magia", list: "magias", search: "Filtrar magias" },
+  { id: "inventario", label: "INVENTÁRIO", button: "Novo Item", list: "inventarioGeral", search: "Filtrar itens" },
+  { id: "perks", label: "VANTAGENS", button: "Nova Perk", list: "perks", search: "Filtrar perks" },
 ];
 
 const equipLabels = {
@@ -84,13 +96,13 @@ const equipLabels = {
 
 function Field({ label, value, onChange, type = "text" }) {
   return (
-    <label className="grid grid-cols-[120px_1fr] items-center gap-2 text-xs font-semibold text-blue-950">
+    <label className="grid grid-cols-[86px_1fr] items-center gap-2 text-[11px] font-bold uppercase text-blue-950">
       <span>{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
-        className="w-full border-b border-blue-300 bg-transparent px-2 py-1 outline-none focus:border-blue-700"
+        className="w-full border-b border-blue-300 bg-transparent px-1 py-1 outline-none focus:border-blue-700"
       />
     </label>
   );
@@ -99,12 +111,11 @@ function Field({ label, value, onChange, type = "text" }) {
 function Panel({ title, children, className = "" }) {
   return (
     <motion.section
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative rounded-2xl border border-blue-400/70 bg-white/85 p-4 shadow-[0_0_24px_rgba(37,99,235,0.18)] backdrop-blur ${className}`}
+      className={`relative rounded-xl border border-blue-400/80 bg-white/90 p-3 shadow-[0_0_18px_rgba(37,99,235,0.16)] ${className}`}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-white/70" />
-      {title && <h2 className="mb-3 text-center text-lg font-black tracking-[0.18em] text-blue-900">{title}</h2>}
+      {title && <h2 className="mb-3 text-center text-base font-black tracking-[0.28em] text-blue-900">{title}</h2>}
       {children}
     </motion.section>
   );
@@ -113,20 +124,56 @@ function Panel({ title, children, className = "" }) {
 function Bar({ icon: Icon, label, current, max, color, onCurrent, onMax }) {
   const percent = Math.max(0, Math.min(100, max ? (current / max) * 100 : 0));
   return (
-    <Panel className="min-h-[116px]">
+    <Panel>
       <div className="flex items-center gap-3">
-        <Icon className={color} size={34} />
+        <Icon className={color} size={24} />
         <div className="flex-1">
-          <div className={`text-xl font-black ${color}`}>{label}</div>
-          <div className="mt-2 flex items-center gap-2">
-            <input type="number" value={current} onChange={(e) => onCurrent(Number(e.target.value))} className="w-20 border-b border-blue-300 bg-transparent text-center outline-none" />
+          <div className={`text-lg font-black ${color}`}>{label}</div>
+          <div className="mt-1 flex items-center gap-2 text-sm">
+            <input type="number" value={current} onChange={(e) => onCurrent(Number(e.target.value))} className="w-16 border-b border-blue-300 bg-transparent text-center outline-none" />
             <span>/</span>
-            <input type="number" value={max} onChange={(e) => onMax(Number(e.target.value))} className="w-20 border-b border-blue-300 bg-transparent text-center outline-none" />
+            <input type="number" value={max} onChange={(e) => onMax(Number(e.target.value))} className="w-16 border-b border-blue-300 bg-transparent text-center outline-none" />
           </div>
-          <div className="mt-3 h-3 rounded-full bg-blue-100">
-            <div className="h-3 rounded-full bg-current transition-all" style={{ width: `${percent}%` }} />
+          <div className="mt-2 h-3 rounded-full bg-blue-100">
+            <div className="h-3 rounded-full bg-blue-900 transition-all" style={{ width: `${percent}%` }} />
           </div>
         </div>
+      </div>
+    </Panel>
+  );
+}
+
+function CardList({ title, button, list, onAdd, onUpdate, onDelete, search, setSearch, compact = false }) {
+  const filtered = list.filter((item) => JSON.stringify(item).toLowerCase().includes(search.toLowerCase()));
+  return (
+    <Panel title={title} className="min-h-[520px]">
+      <div className="mb-3 grid gap-3 md:grid-cols-[1fr_auto]">
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtrar..." className="rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-700" />
+        <button onClick={onAdd} className="rounded-lg border border-blue-600 bg-blue-900 px-4 py-2 text-sm font-black text-white hover:bg-blue-800">
+          <Plus size={16} className="inline" /> {button}
+        </button>
+      </div>
+
+      <div className={compact ? "grid gap-3 md:grid-cols-2" : "space-y-3"}>
+        {filtered.map((item, i) => {
+          const realIndex = list.indexOf(item);
+          return (
+            <div key={realIndex} className="rounded-xl border border-blue-300 bg-blue-50/40 p-3">
+              <div className="flex gap-2">
+                <input value={item.nome} onChange={(e) => onUpdate(realIndex, { ...item, nome: e.target.value })} placeholder="Nome" className="w-full border-b border-blue-300 bg-transparent font-bold outline-none" />
+                <button onClick={() => onDelete(realIndex)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+              </div>
+              <div className="mt-2 grid gap-2 md:grid-cols-4">
+                <input value={item.dano} onChange={(e) => onUpdate(realIndex, { ...item, dano: e.target.value })} placeholder="Dano" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
+                <input value={item.critico} onChange={(e) => onUpdate(realIndex, { ...item, critico: e.target.value })} placeholder="Crítico" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
+                <input value={item.custo} onChange={(e) => onUpdate(realIndex, { ...item, custo: e.target.value })} placeholder="Custo" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
+                <input value={item.tipo} onChange={(e) => onUpdate(realIndex, { ...item, tipo: e.target.value })} placeholder="Tipo" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
+              </div>
+              <textarea value={item.descricao} onChange={(e) => onUpdate(realIndex, { ...item, descricao: e.target.value })} placeholder="Descrição / efeito" className="mt-2 h-20 w-full resize-none rounded border border-blue-200 bg-white p-2 text-sm outline-none" />
+            </div>
+          );
+        })}
+        {filtered.length === 0 && <div className="rounded-xl border border-dashed border-blue-300 p-8 text-center text-sm font-bold text-blue-400">Clique em {button} para adicionar.</div>}
       </div>
     </Panel>
   );
@@ -135,12 +182,14 @@ function Bar({ icon: Icon, label, current, max, color, onCurrent, onMax }) {
 export default function App() {
   const [sheet, setSheet] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("shangri-frontier-ficha")) || initialSheet;
+      return { ...initialSheet, ...JSON.parse(localStorage.getItem("shangri-frontier-ficha")) };
     } catch {
       return initialSheet;
     }
   });
   const [saved, setSaved] = useState(false);
+  const [active, setActive] = useState("combate");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     localStorage.setItem("shangri-frontier-ficha", JSON.stringify(sheet));
@@ -151,9 +200,8 @@ export default function App() {
 
   const set = (key, value) => setSheet((s) => ({ ...s, [key]: value }));
   const setNested = (group, key, value) => setSheet((s) => ({ ...s, [group]: { ...s[group], [key]: value } }));
-  const setArray = (group, index, value) => setSheet((s) => ({ ...s, [group]: s[group].map((item, i) => (i === index ? value : item)) }));
-
   const totalAtributos = useMemo(() => Object.values(sheet.atributos).reduce((a, b) => a + Number(b || 0), 0), [sheet.atributos]);
+  const currentTab = tabs.find((t) => t.id === active);
 
   function handleImage(e) {
     const file = e.target.files?.[0];
@@ -187,29 +235,114 @@ export default function App() {
     reader.readAsText(file);
   }
 
+  function addToList(listName) {
+    setSheet((s) => ({ ...s, [listName]: [...s[listName], { ...emptyCard }] }));
+  }
+
+  function updateList(listName, index, value) {
+    setSheet((s) => ({ ...s, [listName]: s[listName].map((item, i) => (i === index ? value : item)) }));
+  }
+
+  function deleteFromList(listName, index) {
+    setSheet((s) => ({ ...s, [listName]: s[listName].filter((_, i) => i !== index) }));
+  }
+
+  function renderTab() {
+    if (active === "atributos") {
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <Bar icon={Heart} label="HP" current={sheet.hpAtual} max={sheet.hpMax} color="text-green-600" onCurrent={(v) => set("hpAtual", v)} onMax={(v) => set("hpMax", v)} />
+            <Bar icon={Zap} label="RESISTÊNCIA" current={sheet.staminaAtual} max={sheet.staminaMax} color="text-blue-600" onCurrent={(v) => set("staminaAtual", v)} onMax={(v) => set("staminaMax", v)} />
+            <Bar icon={Droplets} label="MANA" current={sheet.manaAtual} max={sheet.manaMax} color="text-violet-600" onCurrent={(v) => set("manaAtual", v)} onMax={(v) => set("manaMax", v)} />
+          </div>
+
+          <Panel title="ATRIBUTOS">
+            <div className="space-y-2">
+              {attrInfo.map(([key, label, desc, color, Icon]) => (
+                <div key={key} className="grid grid-cols-[30px_130px_70px_1fr_80px] items-center gap-2 rounded-lg border border-blue-200 bg-white/70 p-2 text-sm">
+                  <Icon className={color} size={20} />
+                  <span className={`font-black ${color}`}>{label}</span>
+                  <input type="number" value={sheet.atributos[key]} onChange={(e) => setNested("atributos", key, Number(e.target.value))} className="rounded-lg border border-blue-200 bg-white p-2 text-center font-bold outline-none" />
+                  <span className="text-xs">{desc}</span>
+                  <div className="flex overflow-hidden rounded-lg border border-blue-200">
+                    <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) - 1)} className="flex-1 p-2 hover:bg-blue-50"><Minus size={14}/></button>
+                    <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) + 1)} className="flex-1 p-2 hover:bg-blue-50"><Plus size={14}/></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 text-center text-xs font-black">TOTAL DE ATRIBUTOS: {totalAtributos}</div>
+          </Panel>
+        </div>
+      );
+    }
+
+    if (active === "combate") {
+      return <CardList title="COMBATE" button="Novo Ataque" list={sheet.ataques} search={search} setSearch={setSearch} onAdd={() => addToList("ataques")} onUpdate={(i, v) => updateList("ataques", i, v)} onDelete={(i) => deleteFromList("ataques", i)} />;
+    }
+    if (active === "habilidades") {
+      return (
+        <div className="space-y-4">
+          <CardList title="HABILIDADES ATIVAS" button="Nova Habilidade" list={sheet.habilidadesAtivas} search={search} setSearch={setSearch} onAdd={() => addToList("habilidadesAtivas")} onUpdate={(i, v) => updateList("habilidadesAtivas", i, v)} onDelete={(i) => deleteFromList("habilidadesAtivas", i)} compact />
+          <CardList title="HABILIDADES PASSIVAS" button="Nova Habilidade Passiva" list={sheet.habilidadesPassivas} search={search} setSearch={setSearch} onAdd={() => addToList("habilidadesPassivas")} onUpdate={(i, v) => updateList("habilidadesPassivas", i, v)} onDelete={(i) => deleteFromList("habilidadesPassivas", i)} compact />
+        </div>
+      );
+    }
+    if (active === "magias") {
+      return <CardList title="MAGIAS" button="Nova Magia" list={sheet.magias} search={search} setSearch={setSearch} onAdd={() => addToList("magias")} onUpdate={(i, v) => updateList("magias", i, v)} onDelete={(i) => deleteFromList("magias", i)} />;
+    }
+    if (active === "inventario") {
+      return (
+        <div className="space-y-4">
+          <Panel title="EQUIPAMENTOS">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+              {Object.entries(equipLabels).map(([key, label]) => <textarea key={key} value={sheet.equipamentos[key]} onChange={(e) => setNested("equipamentos", key, e.target.value)} placeholder={label} className="h-28 resize-none rounded-xl border border-blue-200 bg-white/70 p-2 text-sm outline-none" />)}
+            </div>
+          </Panel>
+          <Panel title="INVENTÁRIO RÁPIDO">
+            <div className="grid grid-cols-5 gap-2 md:grid-cols-10">
+              {sheet.inventarioRapido.map((v, i) => <input key={i} value={v} onChange={(e) => setSheet((s) => ({ ...s, inventarioRapido: s.inventarioRapido.map((item, idx) => idx === i ? e.target.value : item) }))} placeholder={`${i === 9 ? 0 : i + 1}`} className="h-14 rounded-lg border border-blue-200 bg-white/70 p-1 text-center text-xs outline-none" />)}
+            </div>
+          </Panel>
+          <CardList title="INVENTÁRIO GERAL" button="Novo Item" list={sheet.inventarioGeral} search={search} setSearch={setSearch} onAdd={() => addToList("inventarioGeral")} onUpdate={(i, v) => updateList("inventarioGeral", i, v)} onDelete={(i) => deleteFromList("inventarioGeral", i)} compact />
+        </div>
+      );
+    }
+    return <CardList title="PERKS" button="Nova Perk" list={sheet.perks} search={search} setSearch={setSearch} onAdd={() => addToList("perks")} onUpdate={(i, v) => updateList("perks", i, v)} onDelete={(i) => deleteFromList("perks", i)} compact />;
+  }
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#eff6ff,#ffffff_45%,#dbeafe)] p-4 text-blue-950">
-      <div className="mx-auto max-w-[1500px] rounded-[2rem] border-2 border-blue-500 bg-white/55 p-4 shadow-[0_0_35px_rgba(37,99,235,0.45)]">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-300 bg-white/80 p-4">
+      <div className="mx-auto max-w-[1280px] rounded-[1.5rem] border-2 border-blue-500 bg-white/65 p-3 shadow-[0_0_35px_rgba(37,99,235,0.45)]">
+        <header className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-300 bg-white/90 p-3">
           <div>
-            <h1 className="text-4xl font-black tracking-widest text-blue-950">SHANGRI-LA FRONTIER</h1>
-            <p className="text-sm font-bold tracking-[0.3em] text-blue-700">FICHA DIGITAL DE PERSONAGEM</p>
+            <h1 className="text-3xl font-black tracking-[0.22em] text-blue-950">FRONTEIRA DE SHANGRÍ-LA</h1>
+            <p className="text-xs font-bold tracking-[0.35em] text-blue-700">FICHA DIGITAL DE PERSONAGEM</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={exportarFicha} className="flex items-center gap-2 rounded-xl border border-blue-400 px-3 py-2 font-bold hover:bg-blue-50"><Download size={18}/> Exportar</button>
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-blue-400 px-3 py-2 font-bold hover:bg-blue-50"><Upload size={18}/> Importar<input type="file" accept=".json" onChange={importarFicha} className="hidden" /></label>
-            <button onClick={() => confirm("Resetar ficha?") && setSheet(initialSheet)} className="flex items-center gap-2 rounded-xl border border-red-300 px-3 py-2 font-bold text-red-600 hover:bg-red-50"><RotateCcw size={18}/> Resetar</button>
-            <div className="flex items-center gap-2 rounded-xl bg-blue-900 px-3 py-2 font-bold text-white"><Save size={18}/> {saved ? "Salvando..." : "Salvo"}</div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <button onClick={exportarFicha} className="rounded-lg border border-blue-400 px-3 py-2 font-bold hover:bg-blue-50"><Download size={15} className="inline" /> Exportar</button>
+            <label className="cursor-pointer rounded-lg border border-blue-400 px-3 py-2 font-bold hover:bg-blue-50"><Upload size={15} className="inline" /> Importar<input type="file" accept=".json" onChange={importarFicha} className="hidden" /></label>
+            <button onClick={() => confirm("Resetar ficha?") && setSheet(initialSheet)} className="rounded-lg border border-red-300 px-3 py-2 font-bold text-red-600 hover:bg-red-50"><RotateCcw size={15} className="inline" /> Redefinir</button>
+            <div className="rounded-lg bg-blue-900 px-3 py-2 font-bold text-white"><Save size={15} className="inline" /> {saved ? "Salvando..." : "Salvo"}</div>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr_360px]">
-          <aside className="space-y-4">
+        <nav className="mb-3 flex flex-wrap gap-2 rounded-xl border border-blue-300 bg-white/90 p-2">
+          {tabs.map((tab) => (
+            <button key={tab.id} onClick={() => { setActive(tab.id); setSearch(""); }} className={`rounded-lg px-4 py-2 text-sm font-black tracking-wider transition ${active === tab.id ? "bg-blue-900 text-white" : "text-blue-900 hover:bg-blue-50"}`}>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[280px_1fr_300px]">
+          <aside className="space-y-3">
             <Panel>
-              <div className="mb-3 aspect-[3/4] overflow-hidden rounded-2xl border border-blue-300 bg-blue-50/70">
+              <div className="mb-2 aspect-[3/4] overflow-hidden rounded-xl border border-blue-300 bg-blue-50/70">
                 {sheet.imagem ? <img src={sheet.imagem} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-center text-sm font-bold text-blue-300">IMAGEM DO PERSONAGEM</div>}
               </div>
-              <label className="block cursor-pointer rounded-xl bg-blue-900 px-3 py-2 text-center font-bold text-white hover:bg-blue-800">Enviar imagem<input type="file" accept="image/*" onChange={handleImage} className="hidden" /></label>
+              <label className="block cursor-pointer rounded-lg bg-blue-900 px-3 py-2 text-center text-xs font-black text-white hover:bg-blue-800">imagem<input type="file" accept="image/*" onChange={handleImage} className="hidden" /></label>
             </Panel>
 
             <Panel title="DADOS">
@@ -226,76 +359,25 @@ export default function App() {
             </Panel>
 
             <Panel title="BIOGRAFIA">
-              <textarea value={sheet.biografia} onChange={(e) => set("biografia", e.target.value)} className="h-40 w-full resize-none rounded-xl border border-blue-200 bg-white/60 p-3 outline-none focus:border-blue-600" />
+              <textarea value={sheet.biografia} onChange={(e) => set("biografia", e.target.value)} className="h-32 w-full resize-none rounded-xl border border-blue-200 bg-white/60 p-3 outline-none focus:border-blue-600" />
             </Panel>
           </aside>
 
-          <section className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Bar icon={Heart} label="HP" current={sheet.hpAtual} max={sheet.hpMax} color="text-green-600" onCurrent={(v) => set("hpAtual", v)} onMax={(v) => set("hpMax", v)} />
-              <Bar icon={Zap} label="STAMINA" current={sheet.staminaAtual} max={sheet.staminaMax} color="text-blue-600" onCurrent={(v) => set("staminaAtual", v)} onMax={(v) => set("staminaMax", v)} />
-              <Bar icon={Droplets} label="MANA" current={sheet.manaAtual} max={sheet.manaMax} color="text-violet-600" onCurrent={(v) => set("manaAtual", v)} onMax={(v) => set("manaMax", v)} />
-            </div>
-
-            <Panel title="ATRIBUTOS">
-              <div className="space-y-2">
-                {attrInfo.map(([key, label, desc, color, Icon]) => (
-                  <div key={key} className="grid grid-cols-[44px_150px_80px_1fr_100px] items-center gap-3 rounded-xl border border-blue-200 bg-white/70 p-2">
-                    <Icon className={color} />
-                    <span className={`font-black ${color}`}>{label}</span>
-                    <input type="number" value={sheet.atributos[key]} onChange={(e) => setNested("atributos", key, Number(e.target.value))} className="rounded-lg border border-blue-200 bg-white p-2 text-center font-bold outline-none" />
-                    <span className="text-sm">{desc}</span>
-                    <div className="flex overflow-hidden rounded-lg border border-blue-200">
-                      <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) - 1)} className="flex-1 p-2 hover:bg-blue-50"><Minus size={16}/></button>
-                      <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) + 1)} className="flex-1 p-2 hover:bg-blue-50"><Plus size={16}/></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 text-center text-sm font-bold">TOTAL DE ATRIBUTOS: {totalAtributos}</div>
-            </Panel>
-
-            <Panel title="HABILIDADES ATIVAS">
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
-                {sheet.habilidadesAtivas.map((v, i) => <textarea key={i} value={v} onChange={(e) => setArray("habilidadesAtivas", i, e.target.value)} placeholder={`${i + 1}`} className="h-24 resize-none rounded-xl border border-blue-200 bg-white/70 p-2 text-sm outline-none" />)}
-              </div>
-            </Panel>
-
-            <Panel title="HABILIDADES PASSIVAS">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-7">
-                {sheet.habilidadesPassivas.map((v, i) => <textarea key={i} value={v} onChange={(e) => setArray("habilidadesPassivas", i, e.target.value)} placeholder={`Passiva ${i + 1}`} className="h-24 resize-none rounded-2xl border border-blue-200 bg-white/70 p-2 text-sm outline-none" />)}
-              </div>
-            </Panel>
-
-            <Panel title="EQUIPAMENTOS">
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                {Object.entries(equipLabels).map(([key, label]) => <textarea key={key} value={sheet.equipamentos[key]} onChange={(e) => setNested("equipamentos", key, e.target.value)} placeholder={label} className="h-28 resize-none rounded-xl border border-blue-200 bg-white/70 p-2 text-sm outline-none" />)}
-              </div>
-            </Panel>
+          <section className="space-y-3">
+            {renderTab()}
           </section>
 
-          <aside className="space-y-4">
+          <aside className="space-y-3">
             <Panel title="STATUS">
               <div className="space-y-2">
                 {Object.keys(sheet.status).map((key) => <Field key={key} label={key.toUpperCase()} value={sheet.status[key]} onChange={(v) => setNested("status", key, v)} />)}
               </div>
             </Panel>
 
-            <Panel title="PERKS">
-              <div className="grid grid-cols-2 gap-3">
-                {sheet.perks.map((v, i) => <textarea key={i} value={v} onChange={(e) => setArray("perks", i, e.target.value)} placeholder={`Perk ${i + 1}`} className="h-20 resize-none rounded-xl border border-blue-200 bg-white/70 p-2 text-sm outline-none" />)}
-              </div>
-            </Panel>
-
-            <Panel title="INVENTÁRIO RÁPIDO">
-              <div className="grid grid-cols-5 gap-2">
-                {sheet.inventarioRapido.map((v, i) => <input key={i} value={v} onChange={(e) => setArray("inventarioRapido", i, e.target.value)} placeholder={`${i === 9 ? 0 : i + 1}`} className="h-14 rounded-lg border border-blue-200 bg-white/70 p-1 text-center text-xs outline-none" />)}
-              </div>
-            </Panel>
-
-            <Panel title="INVENTÁRIO GERAL">
+            <Panel title="VANTAGENS">
               <div className="grid grid-cols-2 gap-2">
-                {sheet.inventarioGeral.map((v, i) => <input key={i} value={v} onChange={(e) => setArray("inventarioGeral", i, e.target.value)} placeholder={`Item ${i + 1}`} className="rounded-lg border border-blue-200 bg-white/70 p-2 text-xs outline-none" />)}
+                {sheet.perks.slice(0, 10).map((perk, i) => <textarea key={i} value={perk.nome || perk.descricao || ""} onChange={(e) => updateList("perks", i, { ...perk, nome: e.target.value })} placeholder={`Vantagem ${i + 1}`} className="h-16 resize-none rounded-lg border border-blue-200 bg-white/70 p-2 text-xs outline-none" />)}
+                {sheet.perks.length < 10 && Array.from({ length: 10 - sheet.perks.length }).map((_, i) => <div key={`empty-${i}`} className="h-16 rounded-lg border border-blue-200 bg-white/50 p-2 text-xs text-blue-300">Vantagem {sheet.perks.length + i + 1}</div>)}
               </div>
             </Panel>
           </aside>
