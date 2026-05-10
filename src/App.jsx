@@ -252,27 +252,27 @@ export default function App() {
       return (
         <div className="space-y-3">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <Bar icon={Heart} label="HP" current={sheet.hpAtual} max={sheet.hpMax} color="text-green-600" onCurrent={(v) => set("hpAtual", v)} onMax={(v) => set("hpMax", v)} />
-            <Bar icon={Zap} label="RESISTÊNCIA" current={sheet.staminaAtual} max={sheet.staminaMax} color="text-blue-600" onCurrent={(v) => set("staminaAtual", v)} onMax={(v) => set("staminaMax", v)} />
-            <Bar icon={Droplets} label="MANA" current={sheet.manaAtual} max={sheet.manaMax} color="text-violet-600" onCurrent={(v) => set("manaAtual", v)} onMax={(v) => set("manaMax", v)} />
+            <Bar icon={Heart} label="HP" current={sheet.hpAtual} max={sheet.hpMax} color="text-green-400" onCurrent={(v) => set("hpAtual", v)} onMax={(v) => set("hpMax", v)} />
+            <Bar icon={Zap} label="RESISTÊNCIA" current={sheet.staminaAtual} max={sheet.staminaMax} color="text-cyan-400" onCurrent={(v) => set("staminaAtual", v)} onMax={(v) => set("staminaMax", v)} />
+            <Bar icon={Droplets} label="MANA" current={sheet.manaAtual} max={sheet.manaMax} color="text-violet-400" onCurrent={(v) => set("manaAtual", v)} onMax={(v) => set("manaMax", v)} />
           </div>
 
           <Panel title="ATRIBUTOS">
             <div className="space-y-2">
               {attrInfo.map(([key, label, desc, color, Icon]) => (
-                <div key={key} className="grid grid-cols-[30px_130px_70px_1fr_80px] items-center gap-2 rounded-lg border border-blue-200 bg-white/70 p-2 text-sm">
+                <div key={key} className="grid grid-cols-[30px_130px_70px_1fr_80px] items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 p-2 text-sm">
                   <Icon className={color} size={20} />
                   <span className={`font-black ${color}`}>{label}</span>
-                  <input type="number" value={sheet.atributos[key]} onChange={(e) => setNested("atributos", key, Number(e.target.value))} className="rounded-lg border border-blue-200 bg-white p-2 text-center font-bold outline-none" />
-                  <span className="text-xs">{desc}</span>
-                  <div className="flex overflow-hidden rounded-lg border border-blue-200">
-                    <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) - 1)} className="flex-1 p-2 hover:bg-blue-50"><Minus size={14}/></button>
-                    <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) + 1)} className="flex-1 p-2 hover:bg-blue-50"><Plus size={14}/></button>
+                  <input type="number" value={sheet.atributos[key]} onChange={(e) => setNested("atributos", key, Number(e.target.value))} className="rounded-lg border border-zinc-700 bg-zinc-950 p-2 text-center font-bold text-zinc-100 outline-none" />
+                  <span className="text-xs text-zinc-400">{desc}</span>
+                  <div className="flex overflow-hidden rounded-lg border border-zinc-700">
+                    <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) - 1)} className="flex-1 p-2 hover:bg-zinc-800"><Minus size={14}/></button>
+                    <button onClick={() => setNested("atributos", key, Number(sheet.atributos[key]) + 1)} className="flex-1 p-2 hover:bg-zinc-800"><Plus size={14}/></button>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-2 text-center text-xs font-black">TOTAL DE ATRIBUTOS: {totalAtributos}</div>
+            <div className="mt-2 text-center text-xs font-black text-zinc-300">TOTAL DE ATRIBUTOS: {totalAtributos}</div>
           </Panel>
         </div>
       );
@@ -281,6 +281,7 @@ export default function App() {
     if (active === "combate") {
       return <CardList title="COMBATE" button="Novo Ataque" list={sheet.ataques} search={search} setSearch={setSearch} onAdd={() => addToList("ataques")} onUpdate={(i, v) => updateList("ataques", i, v)} onDelete={(i) => deleteFromList("ataques", i)} />;
     }
+
     if (active === "habilidades") {
       return (
         <div className="space-y-4">
@@ -289,48 +290,38 @@ export default function App() {
         </div>
       );
     }
+
     if (active === "magias") {
       return <CardList title="MAGIAS" button="Nova Magia" list={sheet.magias} search={search} setSearch={setSearch} onAdd={() => addToList("magias")} onUpdate={(i, v) => updateList("magias", i, v)} onDelete={(i) => deleteFromList("magias", i)} />;
     }
+
     if (active === "inventario") {
-      return (
-        <div className="space-y-4">
-          <Panel title="EQUIPAMENTOS">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-              {Object.entries(equipLabels).map(([key, label]) => <textarea key={key} value={sheet.equipamentos[key]} onChange={(e) => setNested("equipamentos", key, e.target.value)} placeholder={label} className="h-28 resize-none rounded-xl border border-blue-200 bg-white/70 p-2 text-sm outline-none" />)}
-            </div>
-          </Panel>
-          <Panel title="INVENTÁRIO RÁPIDO">
-            <div className="grid grid-cols-5 gap-2 md:grid-cols-10">
-              {sheet.inventarioRapido.map((v, i) => <input key={i} value={v} onChange={(e) => setSheet((s) => ({ ...s, inventarioRapido: s.inventarioRapido.map((item, idx) => idx === i ? e.target.value : item) }))} placeholder={`${i === 9 ? 0 : i + 1}`} className="h-14 rounded-lg border border-blue-200 bg-white/70 p-1 text-center text-xs outline-none" />)}
-            </div>
-          </Panel>
-          <CardList title="INVENTÁRIO GERAL" button="Novo Item" list={sheet.inventarioGeral} search={search} setSearch={setSearch} onAdd={() => addToList("inventarioGeral")} onUpdate={(i, v) => updateList("inventarioGeral", i, v)} onDelete={(i) => deleteFromList("inventarioGeral", i)} compact />
-        </div>
-      );
+      return <CardList title="INVENTÁRIO" button="Novo Item" list={sheet.inventarioGeral} search={search} setSearch={setSearch} onAdd={() => addToList("inventarioGeral")} onUpdate={(i, v) => updateList("inventarioGeral", i, v)} onDelete={(i) => deleteFromList("inventarioGeral", i)} compact />;
     }
-    return <CardList title="PERKS" button="Nova Perk" list={sheet.perks} search={search} setSearch={setSearch} onAdd={() => addToList("perks")} onUpdate={(i, v) => updateList("perks", i, v)} onDelete={(i) => deleteFromList("perks", i)} compact />;
+
+    return <CardList title="VANTAGENS" button="Nova Perk" list={sheet.perks} search={search} setSearch={setSearch} onAdd={() => addToList("perks")} onUpdate={(i, v) => updateList("perks", i, v)} onDelete={(i) => deleteFromList("perks", i)} compact />;
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#eff6ff,#ffffff_45%,#dbeafe)] p-4 text-blue-950">
-      <div className="mx-auto max-w-[1280px] rounded-[1.5rem] border-2 border-blue-500 bg-white/65 p-3 shadow-[0_0_35px_rgba(37,99,235,0.45)]">
-        <header className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-300 bg-white/90 p-3">
+    <main className="min-h-screen bg-[#0d0e12] p-4 text-zinc-100">
+      <div className="mx-auto max-w-[1280px] rounded-[1.5rem] border border-zinc-700 bg-[#17181d] p-3 shadow-2xl shadow-black/40">
+        <header className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-700 bg-[#1d1f26] p-3">
           <div>
-            <h1 className="text-3xl font-black tracking-[0.22em] text-blue-950">FRONTEIRA DE SHANGRÍ-LA</h1>
-            <p className="text-xs font-bold tracking-[0.35em] text-blue-700">FICHA DIGITAL DE PERSONAGEM</p>
+            <h1 className="text-3xl font-black tracking-[0.22em] text-zinc-100">FRONTEIRA DE SHANGRÍ-LA</h1>
+            <p className="text-xs font-bold tracking-[0.35em] text-purple-300">FICHA DIGITAL DE PERSONAGEM</p>
           </div>
+
           <div className="flex flex-wrap gap-2 text-xs">
-            <button onClick={exportarFicha} className="rounded-lg border border-blue-400 px-3 py-2 font-bold hover:bg-blue-50"><Download size={15} className="inline" /> Exportar</button>
-            <label className="cursor-pointer rounded-lg border border-blue-400 px-3 py-2 font-bold hover:bg-blue-50"><Upload size={15} className="inline" /> Importar<input type="file" accept=".json" onChange={importarFicha} className="hidden" /></label>
-            <button onClick={() => confirm("Resetar ficha?") && setSheet(initialSheet)} className="rounded-lg border border-red-300 px-3 py-2 font-bold text-red-600 hover:bg-red-50"><RotateCcw size={15} className="inline" /> Redefinir</button>
-            <div className="rounded-lg bg-blue-900 px-3 py-2 font-bold text-white"><Save size={15} className="inline" /> {saved ? "Salvando..." : "Salvo"}</div>
+            <button onClick={exportarFicha} className="rounded-lg border border-zinc-600 px-3 py-2 font-bold text-zinc-200 hover:bg-zinc-800"><Download size={15} className="inline" /> Exportar</button>
+            <label className="cursor-pointer rounded-lg border border-zinc-600 px-3 py-2 font-bold text-zinc-200 hover:bg-zinc-800"><Upload size={15} className="inline" /> Importar<input type="file" accept=".json" onChange={importarFicha} className="hidden" /></label>
+            <button onClick={() => confirm("Resetar ficha?") && setSheet(initialSheet)} className="rounded-lg border border-red-500/60 px-3 py-2 font-bold text-red-300 hover:bg-red-950/40"><RotateCcw size={15} className="inline" /> Redefinir</button>
+            <div className="rounded-lg bg-purple-700 px-3 py-2 font-bold text-white"><Save size={15} className="inline" /> {saved ? "Salvando..." : "Salvo"}</div>
           </div>
         </header>
 
-        <nav className="mb-3 flex flex-wrap gap-2 rounded-xl border border-blue-300 bg-white/90 p-2">
+        <nav className="mb-3 flex flex-wrap gap-2 rounded-xl border border-zinc-700 bg-[#1d1f26] p-2">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => { setActive(tab.id); setSearch(""); }} className={`rounded-lg px-4 py-2 text-sm font-black tracking-wider transition ${active === tab.id ? "bg-blue-900 text-white" : "text-blue-900 hover:bg-blue-50"}`}>
+            <button key={tab.id} onClick={() => { setActive(tab.id); setSearch(""); }} className={`rounded-lg px-4 py-2 text-sm font-black tracking-wider transition ${active === tab.id ? "bg-purple-700 text-white" : "text-zinc-300 hover:bg-zinc-800"}`}>
               {tab.label}
             </button>
           ))}
@@ -339,10 +330,10 @@ export default function App() {
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-[280px_1fr_300px]">
           <aside className="space-y-3">
             <Panel>
-              <div className="mb-2 aspect-[3/4] overflow-hidden rounded-xl border border-blue-300 bg-blue-50/70">
-                {sheet.imagem ? <img src={sheet.imagem} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-center text-sm font-bold text-blue-300">IMAGEM DO PERSONAGEM</div>}
+              <div className="mb-2 aspect-[3/4] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900">
+                {sheet.imagem ? <img src={sheet.imagem} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-center text-sm font-bold text-zinc-500">IMAGEM DO PERSONAGEM</div>}
               </div>
-              <label className="block cursor-pointer rounded-lg bg-blue-900 px-3 py-2 text-center text-xs font-black text-white hover:bg-blue-800">imagem<input type="file" accept="image/*" onChange={handleImage} className="hidden" /></label>
+              <label className="block cursor-pointer rounded-lg bg-purple-700 px-3 py-2 text-center text-xs font-black text-white hover:bg-purple-600">imagem<input type="file" accept="image/*" onChange={handleImage} className="hidden" /></label>
             </Panel>
 
             <Panel title="DADOS">
@@ -353,17 +344,11 @@ export default function App() {
                 <Field label="RAÇA" value={sheet.raca} onChange={(v) => set("raca", v)} />
                 <Field label="ORIGEM" value={sheet.origem} onChange={(v) => set("origem", v)} />
                 <Field label="CLASSE" value={sheet.classe} onChange={(v) => set("classe", v)} />
-                <Field label="EXP" type="number" value={sheet.exp} onChange={(v) => set("exp", v)} />
-                <Field label="PRÓX. NÍVEL" type="number" value={sheet.proximoNivel} onChange={(v) => set("proximoNivel", v)} />
               </div>
-            </Panel>
-
-            <Panel title="BIOGRAFIA">
-              <textarea value={sheet.biografia} onChange={(e) => set("biografia", e.target.value)} className="h-32 w-full resize-none rounded-xl border border-blue-200 bg-white/60 p-3 outline-none focus:border-blue-600" />
             </Panel>
           </aside>
 
-          <section className="space-y-3">
+          <section>
             {renderTab()}
           </section>
 
@@ -371,13 +356,6 @@ export default function App() {
             <Panel title="STATUS">
               <div className="space-y-2">
                 {Object.keys(sheet.status).map((key) => <Field key={key} label={key.toUpperCase()} value={sheet.status[key]} onChange={(v) => setNested("status", key, v)} />)}
-              </div>
-            </Panel>
-
-            <Panel title="VANTAGENS">
-              <div className="grid grid-cols-2 gap-2">
-                {sheet.perks.slice(0, 10).map((perk, i) => <textarea key={i} value={perk.nome || perk.descricao || ""} onChange={(e) => updateList("perks", i, { ...perk, nome: e.target.value })} placeholder={`Vantagem ${i + 1}`} className="h-16 resize-none rounded-lg border border-blue-200 bg-white/70 p-2 text-xs outline-none" />)}
-                {sheet.perks.length < 10 && Array.from({ length: 10 - sheet.perks.length }).map((_, i) => <div key={`empty-${i}`} className="h-16 rounded-lg border border-blue-200 bg-white/50 p-2 text-xs text-blue-300">Vantagem {sheet.perks.length + i + 1}</div>)}
               </div>
             </Panel>
           </aside>
