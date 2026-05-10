@@ -96,13 +96,13 @@ const equipLabels = {
 
 function Field({ label, value, onChange, type = "text" }) {
   return (
-    <label className="grid grid-cols-[86px_1fr] items-center gap-2 text-[11px] font-bold uppercase text-blue-950">
+    <label className="grid grid-cols-[86px_1fr] items-center gap-2 text-[11px] font-bold uppercase text-zinc-300">
       <span>{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
-        className="w-full border-b border-blue-300 bg-transparent px-1 py-1 outline-none focus:border-blue-700"
+        className="w-full border-b border-zinc-700 bg-transparent px-1 py-1 outline-none focus:border-blue-700"
       />
     </label>
   );
@@ -113,9 +113,9 @@ function Panel({ title, children, className = "" }) {
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative rounded-xl border border-blue-400/80 bg-white/90 p-3 shadow-[0_0_18px_rgba(37,99,235,0.16)] ${className}`}
+      className={`relative rounded-xl border border-zinc-700 bg-[#1d1f26] p-3 shadow-[0_0_18px_rgba(37,99,235,0.16)] ${className}`}
     >
-      {title && <h2 className="mb-3 text-center text-base font-black tracking-[0.28em] text-blue-900">{title}</h2>}
+      {title && <h2 className="mb-3 text-center text-base font-black tracking-[0.28em] text-purple-300">{title}</h2>}
       {children}
     </motion.section>
   );
@@ -130,12 +130,12 @@ function Bar({ icon: Icon, label, current, max, color, onCurrent, onMax }) {
         <div className="flex-1">
           <div className={`text-lg font-black ${color}`}>{label}</div>
           <div className="mt-1 flex items-center gap-2 text-sm">
-            <input type="number" value={current} onChange={(e) => onCurrent(Number(e.target.value))} className="w-16 border-b border-blue-300 bg-transparent text-center outline-none" />
+            <input type="number" value={current} onChange={(e) => onCurrent(Number(e.target.value))} className="w-16 border-b border-zinc-700 bg-transparent text-center outline-none" />
             <span>/</span>
-            <input type="number" value={max} onChange={(e) => onMax(Number(e.target.value))} className="w-16 border-b border-blue-300 bg-transparent text-center outline-none" />
+            <input type="number" value={max} onChange={(e) => onMax(Number(e.target.value))} className="w-16 border-b border-zinc-700 bg-transparent text-center outline-none" />
           </div>
-          <div className="mt-2 h-3 rounded-full bg-blue-100">
-            <div className="h-3 rounded-full bg-blue-900 transition-all" style={{ width: `${percent}%` }} />
+          <div className="mt-2 h-3 rounded-full bg-zinc-800">
+            <div className="h-3 rounded-full bg-purple-700 transition-all" style={{ width: `${percent}%` }} />
           </div>
         </div>
       </div>
@@ -148,8 +148,8 @@ function CardList({ title, button, list, onAdd, onUpdate, onDelete, search, setS
   return (
     <Panel title={title} className="min-h-[520px]">
       <div className="mb-3 grid gap-3 md:grid-cols-[1fr_auto]">
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtrar..." className="rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-700" />
-        <button onClick={onAdd} className="rounded-lg border border-blue-600 bg-blue-900 px-4 py-2 text-sm font-black text-white hover:bg-blue-800">
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtrar..." className="rounded-lg border border-zinc-700 bg-[#101116] px-3 py-2 text-sm outline-none focus:border-blue-700" />
+        <button onClick={onAdd} className="rounded-lg border border-purple-500 bg-purple-700 px-4 py-2 text-sm font-black text-white hover:bg-blue-800">
           <Plus size={16} className="inline" /> {button}
         </button>
       </div>
@@ -158,22 +158,22 @@ function CardList({ title, button, list, onAdd, onUpdate, onDelete, search, setS
         {filtered.map((item, i) => {
           const realIndex = list.indexOf(item);
           return (
-            <div key={realIndex} className="rounded-xl border border-blue-300 bg-blue-50/40 p-3">
+            <div key={realIndex} className="rounded-xl border border-zinc-700 bg-[#15161b] p-3">
               <div className="flex gap-2">
-                <input value={item.nome} onChange={(e) => onUpdate(realIndex, { ...item, nome: e.target.value })} placeholder="Nome" className="w-full border-b border-blue-300 bg-transparent font-bold outline-none" />
+                <input value={item.nome} onChange={(e) => onUpdate(realIndex, { ...item, nome: e.target.value })} placeholder="Nome" className="w-full border-b border-zinc-700 bg-transparent font-bold outline-none" />
                 <button onClick={() => onDelete(realIndex)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
               </div>
               <div className="mt-2 grid gap-2 md:grid-cols-4">
-                <input value={item.dano} onChange={(e) => onUpdate(realIndex, { ...item, dano: e.target.value })} placeholder="Dano" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
-                <input value={item.critico} onChange={(e) => onUpdate(realIndex, { ...item, critico: e.target.value })} placeholder="Crítico" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
-                <input value={item.custo} onChange={(e) => onUpdate(realIndex, { ...item, custo: e.target.value })} placeholder="Custo" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
-                <input value={item.tipo} onChange={(e) => onUpdate(realIndex, { ...item, tipo: e.target.value })} placeholder="Tipo" className="rounded border border-blue-200 bg-white px-2 py-1 text-sm outline-none" />
+                <input value={item.dano} onChange={(e) => onUpdate(realIndex, { ...item, dano: e.target.value })} placeholder="Dano" className="rounded border border-zinc-700 bg-[#101116] px-2 py-1 text-sm outline-none" />
+                <input value={item.critico} onChange={(e) => onUpdate(realIndex, { ...item, critico: e.target.value })} placeholder="Crítico" className="rounded border border-zinc-700 bg-[#101116] px-2 py-1 text-sm outline-none" />
+                <input value={item.custo} onChange={(e) => onUpdate(realIndex, { ...item, custo: e.target.value })} placeholder="Custo" className="rounded border border-zinc-700 bg-[#101116] px-2 py-1 text-sm outline-none" />
+                <input value={item.tipo} onChange={(e) => onUpdate(realIndex, { ...item, tipo: e.target.value })} placeholder="Tipo" className="rounded border border-zinc-700 bg-[#101116] px-2 py-1 text-sm outline-none" />
               </div>
-              <textarea value={item.descricao} onChange={(e) => onUpdate(realIndex, { ...item, descricao: e.target.value })} placeholder="Descrição / efeito" className="mt-2 h-20 w-full resize-none rounded border border-blue-200 bg-white p-2 text-sm outline-none" />
+              <textarea value={item.descricao} onChange={(e) => onUpdate(realIndex, { ...item, descricao: e.target.value })} placeholder="Descrição / efeito" className="mt-2 h-20 w-full resize-none rounded border border-zinc-700 bg-[#101116] p-2 text-sm outline-none" />
             </div>
           );
         })}
-        {filtered.length === 0 && <div className="rounded-xl border border-dashed border-blue-300 p-8 text-center text-sm font-bold text-blue-400">Clique em {button} para adicionar.</div>}
+        {filtered.length === 0 && <div className="rounded-xl border border-dashed border-zinc-700 p-8 text-center text-sm font-bold text-blue-400">Clique em {button} para adicionar.</div>}
       </div>
     </Panel>
   );
